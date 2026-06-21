@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || 'gpt-5.5',
         reasoning: { effort: 'low' },
-        tools: [{ type: 'web_search', search_context_size: 'low' }],
+        tools: [{ type: 'web_search', search_context_size: 'high' }],
         input: prompt,
       }),
     });
