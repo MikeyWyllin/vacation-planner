@@ -40,9 +40,9 @@ function compactCandidate(c) {
     miles: c.distance,
     localScore: c.score,
     category: c.category,
-    environments: (c.environments || []).slice(0, 4),
-    activities: (c.activities || []).slice(0, 6),
-    lodging: (c.lodging || []).slice(0, 4),
+    environments: (c.environments || []).slice(0, 3),
+    activities: (c.activities || []).slice(0, 4),
+    lodging: (c.lodging || []).slice(0, 3),
     days: [c.idealMinDays, c.idealMaxDays],
     sleepNight: c.sleepBudgetPerNight,
   };
@@ -64,9 +64,9 @@ function buildSmartCandidateSet(candidates, origin, answers) {
     selected.push(compactCandidate(candidate));
   }
 
-  all.slice(0, 70).forEach(add);
+  all.slice(0, 35).forEach(add);
 
-  const categories = ['beach', 'city', 'lake', 'woods', 'mountain', 'desert', 'historic', 'sports', 'theme', 'island', 'remote', 'wine', 'ski', 'resort'];
+  const categories = ['beach', 'city', 'lake', 'woods', 'mountain', 'desert', 'historic', 'theme', 'island', 'remote', 'resort'];
   for (const category of categories) {
     const match = all.find(c => normalize(c.category).includes(category) || (c.environments || []).some(e => normalize(e).includes(category)));
     add(match);
@@ -82,10 +82,10 @@ function buildSmartCandidateSet(candidates, origin, answers) {
     [2600, 99999],
   ];
   for (const [min, max] of distanceBands) {
-    all.filter(c => c.distance >= min && c.distance <= max).slice(0, 2).forEach(add);
+    all.filter(c => c.distance >= min && c.distance <= max).slice(0, 1).forEach(add);
   }
 
-  return selected.slice(0, 36);
+  return selected.slice(0, 22);
 }
 
 export default async function handler(req, res) {
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     const { origin, answers, candidates } = body || {};
     const safeCandidates = buildSmartCandidateSet(candidates, origin, answers);
 
-    const prompt = `You are the AI brain for a vacation destination generator. The app is only the sensory input: it collected the user's answers, starting ZIP, distance estimates, and a compact candidate set from a 500-place destination database. You make the final decision.
+    const prompt = `You are the AI brain for a vacation destination generator. The app collected the user's answers, starting ZIP, distance estimates, and a compact candidate set from a 500-place destination database. You make the final decision.
 
 Your job: choose the best 3 vacation destinations for this exact user. Do not simply repeat the local score order. Local scores are weak signals, not final answers.
 
@@ -114,7 +114,7 @@ Hard rules:
 - Do not over-recommend places near the user's home just because they are close. Nearby places should only win for very short/local trips or if the user clearly asked for that vibe.
 - If the user is leaving from Northern Virginia / DC area and asks for a real vacation, Washington DC, Arlington, and Alexandria should usually be treated as home-area day trips, not top vacation picks.
 - Match trip length, travel method, travel range, lodging budget, environment, sleep type, activities, group type, pace, climate, crowds, nightlife, famous-vs-hidden preference, and dealbreakers.
-- Use web search for current lodging reality, season/weather practicality, big events, safety/practical travel issues, and whether the trip length makes sense.
+- Use web search only where it changes the final recommendation: lodging reality, season/weather practicality, major events, safety/practical travel issues, and whether the trip length makes sense.
 - The sleep budget is ONLY for lodging per night. Do not treat it as total daily vacation spending.
 - Be direct. Do not recommend a famous place just because it is famous.
 - Return strict JSON only. No markdown. No surrounding explanation.
@@ -158,8 +158,8 @@ Return this JSON shape:
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || 'gpt-5.5',
         reasoning: { effort: 'high' },
-        tools: [{ type: 'web_search', search_context_size: 'medium' }],
-        max_output_tokens: 1800,
+        tools: [{ type: 'web_search', search_context_size: 'low' }],
+        max_output_tokens: 3500,
         input: prompt,
       }),
     });

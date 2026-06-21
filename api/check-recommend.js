@@ -19,6 +19,13 @@ function parseJson(text) {
   try { return JSON.parse(match[0]); } catch { return null; }
 }
 
+function explainDetail(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (value.reason) return value.reason;
+  try { return JSON.stringify(value); } catch { return String(value); }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Use POST.' });
@@ -58,7 +65,8 @@ export default async function handler(req, res) {
     }
 
     if (status !== 'completed') {
-      res.status(200).json({ mode: 'no_ai_picks', message: `AI job ended without completed results: ${status}`, detail: data.error?.message || data.incomplete_details || data });
+      const detail = explainDetail(data.error?.message || data.incomplete_details || data);
+      res.status(200).json({ mode: 'no_ai_picks', message: `AI job ended without completed results: ${status}`, detail });
       return;
     }
 
