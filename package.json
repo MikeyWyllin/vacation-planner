@@ -1,0 +1,13 @@
+{
+  "name": "vacation-ai-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "setup:knowledge": "node scripts/setup-openai-knowledge.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
