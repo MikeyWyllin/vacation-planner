@@ -19,6 +19,10 @@ function compactCandidate(c) {
     lodging: (c.lodging || []).slice(0, 3),
     days: [c.idealMinDays, c.idealMaxDays],
     sleepNight: c.sleepBudgetPerNight,
+    tagScores: c.tagScores || {},
+    seasonTags: c.seasonTags || [],
+    tripStyleTags: c.tripStyleTags || [],
+    masterNotes: c.masterNotes || '',
   };
 }
 
@@ -103,6 +107,8 @@ Hard rules:
 - Think independently from the user's answers. The AI is the brain; the app is only sensory input.
 - Use the persistent destination knowledge store or full compact candidate set as the main destination universe, but you may go outside it if web search clearly finds a better answer.
 - Spend the reasoning needed to compare distance, trip length, route practicality, lodging fit, activities, season, and tradeoffs before choosing.
+- Treat selected tags as weighted preferences, not mandatory checkboxes. A destination does not need every selected tag to win; choose the places with the strongest overall overlap and the fewest serious tradeoffs.
+- Only treat something as a hard filter if the user wrote it as a dealbreaker or the answer makes it physically/practically impossible, such as a sleep budget far below normal lodging reality or a travel range that cannot reach the place.
 - Do not over-recommend places near the user's home just because they are close. Nearby places should only win for very short/local trips or if the user clearly asked for that vibe.
 - If the user is leaving from Northern Virginia / DC area and asks for a real vacation, Washington DC, Arlington, and Alexandria should usually be treated as home-area day trips, not top vacation picks.
 - Match trip length, travel method, travel range, lodging budget, environment, sleep type, activities, group type, pace, climate, crowds, nightlife, famous-vs-hidden preference, and dealbreakers.
