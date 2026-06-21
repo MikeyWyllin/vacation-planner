@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel dev",
-    "setup:knowledge": "node scripts/setup-openai-knowledge.js"
+    "setup:knowledge": "node scripts/setup-openai-knowledge.js",
+    "enrich:data": "node scripts/enrich-destination-data.js",
+    "export:excel": "python3 scripts/export-destination-master-xlsx.py",
+    "build:data": "npm run enrich:data && npm run export:excel"
   },
   "dependencies": {},
   "devDependencies": {}

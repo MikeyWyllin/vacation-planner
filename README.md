@@ -86,8 +86,11 @@ For AI results, use Vercel, Netlify Functions, Cloudflare Workers, or another ba
 - `api/check-recommend.js` — checks whether the AI job is finished
 - `api/recommend.js` — legacy direct AI route kept for compatibility
 - `scripts/setup-openai-knowledge.js` — one-time OpenAI vector store setup
+- `scripts/enrich-destination-data.js` — adds 0-5 destination tag scores to the database
+- `scripts/export-destination-master-xlsx.py` — exports the editable Excel master database
 - `data/destinations.json` — 500-place database
 - `data/destinations.js` — browser version of the database
+- `data/vacation-destination-master.xlsx` — human-editable destination master sheet
 - `.nojekyll` — safe for GitHub Pages static hosting
 
 ## How the ranking works
@@ -109,5 +112,18 @@ The local engine creates compact context for the AI using:
 - nightlife
 - famous vs hidden-gem preference
 - typed dealbreakers
+- detailed 0-5 destination tag scores for scenery, lodging, crowds, nightlife, family fit, budget fit, and activity fit
+
+Selected tags are weighted preferences, not mandatory requirements. The goal is to find destinations with the strongest overall overlap. Hard filters should come from dealbreakers, impossible travel range, or lodging budget reality.
 
 The AI backend is the final decision-maker. The app starts an OpenAI background job, polls until the AI finishes, and only then displays the top 3 suggestions.
+
+## Updating the destination database
+
+Run:
+
+```bash
+npm run build:data
+```
+
+That enriches `data/destinations.json`, updates `data/destinations.js`, and exports `data/vacation-destination-master.xlsx`.

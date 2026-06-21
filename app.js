@@ -390,6 +390,10 @@ function aiCandidatePool() {
       familyScore: c.familyScore,
       nightlifeScore: c.nightlifeScore,
       remoteScore: c.remoteScore,
+      tagScores: c.tagScores,
+      seasonTags: c.seasonTags,
+      tripStyleTags: c.tripStyleTags,
+      masterNotes: c.masterNotes,
       localReasons: c.reasons,
       localWarnings: c.warnings,
     }));
