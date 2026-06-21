@@ -24,9 +24,21 @@ async function openai(path, options = {}) {
 }
 
 const raw = await readFile(new URL('../data/destinations.json', import.meta.url), 'utf8');
-const destinations = JSON.parse(raw);
+const parsed = JSON.parse(raw);
+const destinations = Array.isArray(parsed) ? parsed : parsed.destinations;
+
+if (!Array.isArray(destinations)) {
+  console.error('Could not find a destination list in data/destinations.json.');
+  process.exit(1);
+}
 
 const knowledgeText = destinations.map((d, index) => {
+  const scores = d.tagScores || {};
+  const strongScores = Object.entries(scores)
+    .filter(([, value]) => Number(value) >= 4)
+    .map(([key, value]) => `${key}:${value}`)
+    .join(', ');
+
   return [
     `Destination ${index + 1}: ${d.name}`,
     `Region: ${d.region || ''}`,
@@ -39,6 +51,11 @@ const knowledgeText = destinations.map((d, index) => {
     `Ideal trip length: ${d.idealMinDays || ''}-${d.idealMaxDays || ''} days`,
     `Typical sleep-only lodging target: $${d.sleepBudgetPerNight || ''} per night`,
     `Latitude/longitude: ${d.lat || ''}, ${d.lon || ''}`,
+    `Season tags: ${(d.seasonTags || []).join(', ')}`,
+    `Trip style tags: ${(d.tripStyleTags || []).join(', ')}`,
+    `Strong 0-5 trait scores: ${strongScores}`,
+    `All 0-5 trait scores: ${JSON.stringify(scores)}`,
+    `Master notes: ${d.masterNotes || ''}`,
   ].join('\n');
 }).join('\n\n---\n\n');
 
