@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/start-recommend.js": {
+      "maxDuration": 60
+    },
+    "api/check-recommend.js": {
+      "maxDuration": 60
+    },
+    "api/setup-knowledge.js": {
+      "maxDuration": 60
+    },
+    "api/recommend.js": {
+      "maxDuration": 60
+    }
+  }
+}
