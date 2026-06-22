@@ -2,6 +2,8 @@ const DB = window.VACATION_DESTINATIONS?.destinations || [];
 const META = window.VACATION_DESTINATIONS?.meta || { total: DB.length };
 
 const $ = (id) => document.getElementById(id);
+const HISTORY_KEY = 'vacationPlanner.savedTrips.v1';
+const HISTORY_LIMIT = 25;
 
 const state = {
   zip: '',
@@ -70,6 +72,126 @@ function unique(arr) { return [...new Set((arr || []).filter(Boolean))]; }
 function answerArr(key) { return Array.isArray(state.answers[key]) ? state.answers[key] : (state.answers[key] ? [state.answers[key]] : []); }
 function firstAnswer(key) { return answerArr(key)[0] || ''; }
 function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+function cloneData(value) {
+  return JSON.parse(JSON.stringify(value ?? null));
+}
+
+function readHistory() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('Saved trip history could not be read.', err);
+    return [];
+  }
+}
+
+function writeHistory(items) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_LIMIT)));
+  } catch (err) {
+    console.warn('Saved trip history could not be written.', err);
+  }
+}
+
+function formatSavedDate(iso) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date(iso));
+  } catch {
+    return 'Saved trip';
+  }
+}
+
+function answerPreview(answers) {
+  const duration = Array.isArray(answers?.duration) ? answers.duration[0] : answers?.duration;
+  const travel = (Array.isArray(answers?.travelModes) ? answers.travelModes : []).map(x => typeof x === 'object' ? x.label : x).join(', ');
+  const range = (Array.isArray(answers?.distance) ? answers.distance : []).map(x => typeof x === 'object' ? x.label : x).join(', ');
+  return [duration, travel, range].filter(Boolean).join(' • ');
+}
+
+function saveTripHistory(results) {
+  if (!Array.isArray(results) || !results.length) return;
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: new Date().toISOString(),
+    zip: state.zip,
+    origin: cloneData(state.origin),
+    answers: cloneData(state.answers),
+    results: cloneData(results.slice(0, 3)),
+  };
+  writeHistory([entry, ...readHistory()]);
+  renderHistory();
+}
+
+function loadSavedTrip(id) {
+  const entry = readHistory().find(item => item.id === id);
+  if (!entry) return;
+  state.zip = entry.zip || '';
+  state.origin = entry.origin || null;
+  state.answers = entry.answers || {};
+  state.current = 0;
+  renderResults(entry.results || [], 'ai', { save: false });
+  $('resultsSummary').textContent = `Loaded saved AI suggestions from ${formatSavedDate(entry.createdAt)}.`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteSavedTrip(id) {
+  writeHistory(readHistory().filter(item => item.id !== id));
+  renderHistory();
+}
+
+function clearSavedTrips() {
+  writeHistory([]);
+  renderHistory();
+}
+
+function renderHistory() {
+  const panel = $('historyPanel');
+  const list = $('historyList');
+  if (!panel || !list) return;
+  const history = readHistory();
+  panel.classList.toggle('hidden', history.length === 0);
+  if (!history.length) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = history.map(entry => {
+    const origin = entry.origin ? `${entry.origin.city || 'Unknown'}, ${entry.origin.region || ''}` : entry.zip || 'Unknown start';
+    const names = (entry.results || []).map(r => r.name).filter(Boolean).slice(0, 3);
+    return `
+      <article class="history-item">
+        <div>
+          <strong>${escapeHTML(origin)}</strong>
+          <span>${escapeHTML(formatSavedDate(entry.createdAt))}${answerPreview(entry.answers) ? ` • ${escapeHTML(answerPreview(entry.answers))}` : ''}</span>
+          <p>${escapeHTML(names.join(' • ') || 'Saved AI suggestions')}</p>
+        </div>
+        <div class="history-actions">
+          <button class="secondary compact" data-load-history="${escapeHTML(entry.id)}">Open</button>
+          <button class="secondary compact danger" data-delete-history="${escapeHTML(entry.id)}">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+  list.querySelectorAll('[data-load-history]').forEach(btn => {
+    btn.addEventListener('click', () => loadSavedTrip(btn.dataset.loadHistory));
+  });
+  list.querySelectorAll('[data-delete-history]').forEach(btn => {
+    btn.addEventListener('click', () => deleteSavedTrip(btn.dataset.deleteHistory));
+  });
+}
 
 function distanceAnswers() {
   return answerArr('distance').filter(v => v && typeof v === 'object');
@@ -519,7 +641,7 @@ function scoreDestination(dest) {
   return { ...dest, distance, score, reasons: unique(reasons).slice(0, 5), warnings: unique(warnings).slice(0, 3) };
 }
 
-function renderResults(results, mode = 'local') {
+function renderResults(results, mode = 'local', options = {}) {
   state.lastResults = results;
   state.aiMode = mode === 'ai';
   $('zipScreen').classList.add('hidden');
@@ -552,6 +674,7 @@ function renderResults(results, mode = 'local') {
     $('resultsGrid').appendChild(card);
   });
   $('promptBox').value = buildDeepPrompt(results);
+  if (mode === 'ai' && options.save !== false) saveTripHistory(results);
   render();
 }
 
@@ -735,6 +858,7 @@ $('editBtn').addEventListener('click', () => {
   render();
 });
 $('resetBtn').addEventListener('click', resetAll);
+$('clearHistoryBtn')?.addEventListener('click', clearSavedTrips);
 $('copyPromptBtn').addEventListener('click', async () => {
   $('copyPromptBtn').textContent = 'Running AI...';
   await submitTrip();
@@ -746,4 +870,5 @@ $('textAnswer').addEventListener('input', () => {
   renderAnswerTray();
 });
 
+renderHistory();
 render();

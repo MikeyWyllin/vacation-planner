@@ -85,6 +85,62 @@ h3 { font-size: 21px; }
 .stat-card span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
 .stat-card strong { font-size: 16px; line-height: 1.1; display: block; }
 
+.history-card {
+  border-radius: var(--radius);
+  padding: 18px;
+  margin: 14px 0;
+}
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.055);
+  border-radius: 18px;
+  padding: 14px;
+}
+.history-item strong,
+.history-item span,
+.history-item p {
+  display: block;
+}
+.history-item span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 4px;
+}
+.history-item p {
+  color: var(--text);
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.history-actions {
+  display: flex;
+  gap: 8px;
+}
+.compact {
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.danger {
+  color: var(--bad);
+}
+
 .game-card, .results-top, .deep-card, .loading-card {
   border-radius: var(--radius);
   padding: 24px;
@@ -230,5 +286,8 @@ input:focus, textarea:focus { border-color: rgba(99,216,255,.65); box-shadow: 0 
   .option-grid { grid-template-columns: 1fr; }
   .controls { grid-template-columns: 1fr 1fr; }
   .controls .primary { grid-column: span 2; }
+  .history-head, .history-item { grid-template-columns: 1fr; }
+  .history-actions { width: 100%; }
+  .history-actions .compact { flex: 1; }
   .submit-bar .primary { padding-left: 14px; padding-right: 14px; }
 }
